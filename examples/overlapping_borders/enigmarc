@@ -1,0 +1,8 @@
+#! /bin/sh
+
+BW=3
+enigmac config border_width $BW
+enigmac config window_gap -$BW
+for side in top right bottom left ; do
+	enigmac config ${side}_padding $BW
+done

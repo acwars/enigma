@@ -1,0 +1,22 @@
+#! /bin/sh
+
+. ./prelude
+
+enigmac monitor -a "test-receptacle"
+enigmac desktop -f "test-receptacle"
+
+enigmac node -i
+enigmac node @/ -p east -i
+enigmac node @/2 -p north -i
+
+enigmac rule -a Test:test -o node=@/1
+enigmac rule -a Test:test -o node=@/2/1
+enigmac rule -a Test:test -o node=@/2/2
+
+window add 3
+
+enigmac query -N -n '.leaf.!window.local' > /dev/null && fail "At least one remaining receptacle."
+
+window remove 3
+
+enigmac desktop "test-receptacle" -r

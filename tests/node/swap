@@ -1,0 +1,26 @@
+#! /bin/sh
+
+. ./prelude
+
+enigmac monitor -a "test-swap-a" "test-swap-b"
+enigmac desktop -f "test-swap-a"
+
+window add 5
+next_focus_b=$(enigmac query -N -n @/2/2/1)
+enigmac desktop -f "test-swap-b"
+window add 3
+
+enigmac node -f @test-swap-a:/2/2/1
+enigmac node -a @test-swap-b:/1
+
+enigmac node @/2 -s @test-swap-b:/1
+
+[ "$(enigmac query -N -n @test-swap-b:)" = "$next_focus_b" ] || fail "Invalid focus after swap."
+
+window remove 2
+enigmac desktop -f "test-swap-b"
+window remove 1 2
+window remove 4
+
+enigmac desktop "test-swap-a" -r
+enigmac desktop "test-swap-b" -r

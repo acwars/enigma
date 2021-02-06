@@ -1,0 +1,25 @@
+#! /bin/sh
+
+. ./prelude
+
+enigmac monitor -a "test-transfer-a" "test-transfer-b"
+enigmac desktop -f "test-transfer-a"
+
+window add 5
+
+next_focus_a=$(enigmac query -N -n @/1)
+next_focus_b=$(enigmac query -N -n @/2/2/1)
+
+enigmac node -f $next_focus_b
+enigmac node @/2 -d "test-transfer-b"
+
+[ "$next_focus_a" = "$(enigmac query -N -n @test-transfer-a:)" ] || fail "Invalid focus after transfer from source."
+[ "$next_focus_b" = "$(enigmac query -N -n @test-transfer-b:)" ] || fail "Invalid focus after transfer in destination."
+
+window remove
+enigmac desktop -f "test-transfer-b"
+window remove 1 2
+window remove 2
+
+enigmac desktop "test-transfer-a" -r
+enigmac desktop "test-transfer-b" -r

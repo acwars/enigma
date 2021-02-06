@@ -1,0 +1,19 @@
+#! /bin/sh
+
+. ./prelude
+
+enigmac monitor -a "test-removal"
+enigmac desktop -f "test-removal"
+
+window add 3
+
+next_focus=$(enigmac query -N -n);
+
+enigmac node -f @/2/1
+enigmac node @/2 -k
+
+[ "$(enigmac query -N -n)" = "$next_focus" ] || fail "Invalid focus after removal."
+
+window remove
+
+enigmac desktop "test-removal" -r

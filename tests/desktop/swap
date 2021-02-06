@@ -1,0 +1,27 @@
+#! /bin/sh
+
+. ./prelude
+
+enigmac wm -a "TEST-SWAP-A" 1024x512+0+0
+enigmac wm -a "TEST-SWAP-B" 1024x512+0+512
+
+enigmac monitor -f "TEST-SWAP-A"
+window add 3
+
+enigmac monitor -f "TEST-SWAP-B"
+window add 2
+
+nodes_a=$(enigmac query -N -m "TEST-SWAP-A")
+nodes_b=$(enigmac query -N -m "TEST-SWAP-B")
+
+enigmac desktop "TEST-SWAP-A:^1" -s "TEST-SWAP-B:^1"
+
+[ "$(enigmac query -N -m 'TEST-SWAP-A')" = "$nodes_b" ] || fail "Wrong nodes in first monitor"
+[ "$(enigmac query -N -m 'TEST-SWAP-B')" = "$nodes_a" ] || fail "Wrong nodes in second monitor"
+
+window remove 3
+enigmac monitor -f "TEST-SWAP-A"
+window remove 2
+
+enigmac monitor "TEST-SWAP-A" -r
+enigmac monitor "TEST-SWAP-B" -r

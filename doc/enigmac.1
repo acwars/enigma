@@ -1,0 +1,1660 @@
+'\" t
+.\"     Title: enigma
+.\"    Author: [see the "Author" section]
+.\" Generator: DocBook XSL Stylesheets vsnapshot <http://docbook.sf.net/>
+.\"      Date: 01/01/2021
+.\"    Manual: Enigma Manual
+.\"    Source: Enigma 0.0.1-18-g87822b5
+.\"  Language: English
+.\"
+.TH "ENIGMA" "1" "01/01/2021" "Enigma 0\&.0\&.1" "Enigma Manual"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\"
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+enigma \- Binary space partitioning window manager
+.SH "SYNOPSIS"
+.sp
+\fBenigma\fR [\fB\-h\fR|\fB\-v\fR|\fB\-c\fR \fICONFIG_PATH\fR]
+.sp
+\fBenigmac\fR \fIDOMAIN\fR [\fISELECTOR\fR] \fICOMMANDS\fR
+.sp
+\fBenigmac\fR \fICOMMAND\fR [\fIOPTIONS\fR] [\fIARGUMENTS\fR]
+.SH "DESCRIPTION"
+.sp
+\fBenigma\fR is a tiling window manager that represents windows as the leaves of a full binary tree\&.
+.sp
+It is controlled and configured via \fBenigmac\fR\&.
+.SH "OPTIONS"
+.PP
+\fB\-h\fR
+.RS 4
+Print the synopsis and exit\&.
+.RE
+.PP
+\fB\-v\fR
+.RS 4
+Print the version and exit\&.
+.RE
+.PP
+\fB\-c\fR \fICONFIG_PATH\fR
+.RS 4
+Use the given configuration file\&.
+.RE
+.SH "COMMON DEFINITIONS"
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+DIR         := north | west | south | east
+CYCLE_DIR   := next | prev
+.fi
+.if n \{\
+.RE
+.\}
+.SH "SELECTORS"
+.sp
+Selectors are used to select a target node, desktop, or monitor\&. A selector can either describe the target relatively or name it globally\&.
+.sp
+Selectors consist of an optional reference, a descriptor and any number of non\-conflicting modifiers as follows:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+[REFERENCE#]DESCRIPTOR(\&.MODIFIER)*
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+The relative targets are computed in relation to the given reference (the default reference value is \fBfocused\fR)\&.
+.sp
+An exclamation mark can be prepended to any modifier in order to reverse its meaning\&.
+.sp
+The following characters cannot be used in monitor or desktop names: \fB#\fR, \fB:\fR, \fB\&.\fR\&.
+.sp
+The special selector \fB%<name>\fR can be used to select a monitor or a desktop with an invalid name\&.
+.SS "Node"
+.sp
+Select a node\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+NODE_SEL := [NODE_SEL#](DIR|CYCLE_DIR|PATH|any|first_ancestor|last|newest|
+                        older|newer|focused|pointed|biggest|smallest|
+                        <node_id>)[\&.[!]focused][\&.[!]active][\&.[!]automatic][\&.[!]local]
+                                  [\&.[!]leaf][\&.[!]window][\&.[!]STATE][\&.[!]FLAG][\&.[!]LAYER][\&.[!]SPLIT_TYPE]
+                                  [\&.[!]same_class][\&.[!]descendant_of][\&.[!]ancestor_of]
+
+STATE := tiled|pseudo_tiled|floating|fullscreen
+
+FLAG := hidden|sticky|private|locked|marked|urgent
+
+LAYER := below|normal|above
+
+SPLIT_TYPE := horizontal|vertical
+
+PATH := @[DESKTOP_SEL:][[/]JUMP](/JUMP)*
+
+JUMP := first|1|second|2|brother|parent|DIR
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBDescriptors\fR
+.RS 4
+.PP
+\fIDIR\fR
+.RS 4
+Selects the window in the given (spacial) direction relative to the reference node\&.
+.RE
+.PP
+\fICYCLE_DIR\fR
+.RS 4
+Selects the node in the given (cyclic) direction relative to the reference node within a depth\-first in\-order traversal of the tree\&.
+.RE
+.PP
+\fIPATH\fR
+.RS 4
+Selects the node at the given path\&.
+.RE
+.PP
+any
+.RS 4
+Selects the first node that matches the given selectors\&.
+.RE
+.PP
+first_ancestor
+.RS 4
+Selects the first ancestor of the reference node that matches the given selectors\&.
+.RE
+.PP
+last
+.RS 4
+Selects the previously focused node relative to the reference node\&.
+.RE
+.PP
+newest
+.RS 4
+Selects the newest node in the history of the focused node\&.
+.RE
+.PP
+older
+.RS 4
+Selects the node older than the reference node in the history\&.
+.RE
+.PP
+newer
+.RS 4
+Selects the node newer than the reference node in the history\&.
+.RE
+.PP
+focused
+.RS 4
+Selects the currently focused node\&.
+.RE
+.PP
+pointed
+.RS 4
+Selects the leaf under the pointer\&.
+.RE
+.PP
+biggest
+.RS 4
+Selects the biggest leaf\&.
+.RE
+.PP
+smallest
+.RS 4
+Selects the smallest leaf\&.
+.RE
+.PP
+<node_id>
+.RS 4
+Selects the node with the given ID\&.
+.RE
+.RE
+.sp
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBPath Jumps\fR
+.RS 4
+.sp
+The initial node is the focused node (or the root if the path starts with \fI/\fR) of the reference desktop (or the selected desktop if the path has a \fIDESKTOP_SEL\fR prefix)\&.
+.PP
+1|first
+.RS 4
+Jumps to the first child\&.
+.RE
+.PP
+2|second
+.RS 4
+Jumps to the second child\&.
+.RE
+.PP
+brother
+.RS 4
+Jumps to the brother node\&.
+.RE
+.PP
+parent
+.RS 4
+Jumps to the parent node\&.
+.RE
+.PP
+\fIDIR\fR
+.RS 4
+Jumps to the node holding the edge in the given direction\&.
+.RE
+.RE
+.sp
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBModifiers\fR
+.RS 4
+.PP
+[!]focused
+.RS 4
+Only consider the focused node\&.
+.RE
+.PP
+[!]active
+.RS 4
+Only consider nodes that are the focused node of their desktop\&.
+.RE
+.PP
+[!]automatic
+.RS 4
+Only consider nodes in automatic insertion mode\&. See also
+\fB\-\-presel\-dir\fR
+under
+\fBNode\fR
+in the
+\fBDOMAINS\fR
+section below\&.
+.RE
+.PP
+[!]local
+.RS 4
+Only consider nodes in the reference desktop\&.
+.RE
+.PP
+[!]leaf
+.RS 4
+Only consider leaf nodes\&.
+.RE
+.PP
+[!]window
+.RS 4
+Only consider nodes that hold a window\&.
+.RE
+.PP
+[!](tiled|pseudo_tiled|floating|fullscreen)
+.RS 4
+Only consider windows in the given state\&.
+.RE
+.PP
+[!]same_class
+.RS 4
+Only consider windows that have the same class as the reference window\&.
+.RE
+.PP
+[!]descendant_of
+.RS 4
+Only consider nodes that are descendants of the reference node\&.
+.RE
+.PP
+[!]ancestor_of
+.RS 4
+Only consider nodes that are ancestors of the reference node\&.
+.RE
+.PP
+[!](hidden|sticky|private|locked|marked|urgent)
+.RS 4
+Only consider windows that have the given flag set\&.
+.RE
+.PP
+[!](below|normal|above)
+.RS 4
+Only consider windows in the given layer\&.
+.RE
+.PP
+[!](horizontal|vertical)
+.RS 4
+Only consider nodes with the given split type\&.
+.RE
+.RE
+.SS "Desktop"
+.sp
+Select a desktop\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+DESKTOP_SEL := [DESKTOP_SEL#](CYCLE_DIR|any|last|newest|older|newer|
+                              [MONITOR_SEL:](focused|^<n>)|
+                              <desktop_id>|<desktop_name>)[\&.[!]focused][\&.[!]active]
+                                                          [\&.[!]occupied][\&.[!]urgent][\&.[!]local]
+                                                          [\&.[!]LAYOUT][\&.[!]user_LAYOUT]
+
+LAYOUT := tiled|monocle
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBDescriptors\fR
+.RS 4
+.PP
+\fICYCLE_DIR\fR
+.RS 4
+Selects the desktop in the given direction relative to the reference desktop\&.
+.RE
+.PP
+any
+.RS 4
+Selects the first desktop that matches the given selectors\&.
+.RE
+.PP
+last
+.RS 4
+Selects the previously focused desktop relative to the reference desktop\&.
+.RE
+.PP
+newest
+.RS 4
+Selects the newest desktop in the history of the focused desktops\&.
+.RE
+.PP
+older
+.RS 4
+Selects the desktop older than the reference desktop in the history\&.
+.RE
+.PP
+newer
+.RS 4
+Selects the desktop newer than the reference desktop in the history\&.
+.RE
+.PP
+focused
+.RS 4
+Selects the currently focused desktop\&.
+.RE
+.PP
+^<n>
+.RS 4
+Selects the nth desktop\&. If
+\fBMONITOR_SEL\fR
+is given, selects the nth desktop on the selected monitor\&.
+.RE
+.PP
+<desktop_id>
+.RS 4
+Selects the desktop with the given ID\&.
+.RE
+.PP
+<desktop_name>
+.RS 4
+Selects the desktop with the given name\&.
+.RE
+.RE
+.sp
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBModifiers\fR
+.RS 4
+.PP
+[!]focused
+.RS 4
+Only consider the focused desktop\&.
+.RE
+.PP
+[!]active
+.RS 4
+Only consider desktops that are the focused desktop of their monitor\&.
+.RE
+.PP
+[!]occupied
+.RS 4
+Only consider occupied desktops\&.
+.RE
+.PP
+[!]urgent
+.RS 4
+Only consider urgent desktops\&.
+.RE
+.PP
+[!]local
+.RS 4
+Only consider desktops inside the reference monitor\&.
+.RE
+.PP
+[!](tiled|monocle)
+.RS 4
+Only consider desktops with the given layout\&.
+.RE
+.PP
+[!](user_tiled|user_monocle)
+.RS 4
+Only consider desktops which have the given layout as userLayout\&.
+.RE
+.RE
+.SS "Monitor"
+.sp
+Select a monitor\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+MONITOR_SEL := [MONITOR_SEL#](DIR|CYCLE_DIR|any|last|newest|older|newer|
+                              focused|pointed|primary|^<n>|
+                              <monitor_id>|<monitor_name>)[\&.[!]focused][\&.[!]occupied]
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBDescriptors\fR
+.RS 4
+.PP
+\fIDIR\fR
+.RS 4
+Selects the monitor in the given (spacial) direction relative to the reference monitor\&.
+.RE
+.PP
+\fICYCLE_DIR\fR
+.RS 4
+Selects the monitor in the given (cyclic) direction relative to the reference monitor\&.
+.RE
+.PP
+any
+.RS 4
+Selects the first monitor that matches the given selectors\&.
+.RE
+.PP
+last
+.RS 4
+Selects the previously focused monitor relative to the reference monitor\&.
+.RE
+.PP
+newest
+.RS 4
+Selects the newest monitor in the history of the focused monitors\&.
+.RE
+.PP
+older
+.RS 4
+Selects the monitor older than the reference monitor in the history\&.
+.RE
+.PP
+newer
+.RS 4
+Selects the monitor newer than the reference monitor in the history\&.
+.RE
+.PP
+focused
+.RS 4
+Selects the currently focused monitor\&.
+.RE
+.PP
+pointed
+.RS 4
+Selects the monitor under the pointer\&.
+.RE
+.PP
+primary
+.RS 4
+Selects the primary monitor\&.
+.RE
+.PP
+^<n>
+.RS 4
+Selects the nth monitor\&.
+.RE
+.PP
+<monitor_id>
+.RS 4
+Selects the monitor with the given ID\&.
+.RE
+.PP
+<monitor_name>
+.RS 4
+Selects the monitor with the given name\&.
+.RE
+.RE
+.sp
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBModifiers\fR
+.RS 4
+.PP
+[!]focused
+.RS 4
+Only consider the focused monitor\&.
+.RE
+.PP
+[!]occupied
+.RS 4
+Only consider monitors where the focused desktop is occupied\&.
+.RE
+.RE
+.SH "WINDOW STATES"
+.PP
+tiled
+.RS 4
+Its size and position are determined by the window tree\&.
+.RE
+.PP
+pseudo_tiled
+.RS 4
+A tiled window that automatically shrinks but doesn\(cqt stretch beyond its floating size\&.
+.RE
+.PP
+floating
+.RS 4
+Can be moved/resized freely\&. Although it doesn\(cqt use any tiling space, it is still part of the window tree\&.
+.RE
+.PP
+fullscreen
+.RS 4
+Fills its monitor rectangle and has no borders\&.
+.RE
+.SH "NODE FLAGS"
+.PP
+hidden
+.RS 4
+Is hidden and doesn\(cqt occupy any tiling space\&.
+.RE
+.PP
+sticky
+.RS 4
+Stays in the focused desktop of its monitor\&.
+.RE
+.PP
+private
+.RS 4
+Tries to keep the same tiling position/size\&.
+.RE
+.PP
+locked
+.RS 4
+Ignores the
+\fBnode \-\-close\fR
+message\&.
+.RE
+.PP
+marked
+.RS 4
+Is marked (useful for deferred actions)\&. A marked node becomes unmarked after being sent on a preselected node\&.
+.RE
+.PP
+urgent
+.RS 4
+Has its urgency hint set\&. This flag is set externally\&.
+.RE
+.SH "STACKING LAYERS"
+.sp
+There\(cqs three stacking layers: BELOW, NORMAL and ABOVE\&.
+.sp
+In each layer, the window are orderered as follow: tiled & pseudo\-tiled < floating < fullscreen\&.
+.SH "RECEPTACLES"
+.sp
+A leaf node that doesn\(cqt hold any window is called a receptacle\&. When a node is inserted on a receptacle in automatic mode, it will replace the receptacle\&. A receptacle can be inserted on a node, preselected and killed\&. Receptacles can therefore be used to build a tree whose leaves are receptacles\&. Using the appropriate rules, one can then send windows on the leaves of this tree\&. This feature is used in \fIexamples/receptacles\fR to store and recreate layouts\&.
+.SH "DOMAINS"
+.SS "Node"
+.sp
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBGeneral Syntax\fR
+.RS 4
+.sp
+node [\fINODE_SEL\fR] \fICOMMANDS\fR
+.sp
+If \fINODE_SEL\fR is omitted, \fBfocused\fR is assumed\&.
+.RE
+.sp
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBCommands\fR
+.RS 4
+.PP
+\fB\-f\fR, \fB\-\-focus\fR [\fINODE_SEL\fR]
+.RS 4
+Focus the selected or given node\&.
+.RE
+.PP
+\fB\-a\fR, \fB\-\-activate\fR [\fINODE_SEL\fR]
+.RS 4
+Activate the selected or given node\&.
+.RE
+.PP
+\fB\-d\fR, \fB\-\-to\-desktop\fR \fIDESKTOP_SEL\fR [\fB\-\-follow\fR]
+.RS 4
+Send the selected node to the given desktop\&. If
+\fB\-\-follow\fR
+is passed, the focused node will stay focused\&.
+.RE
+.PP
+\fB\-m\fR, \fB\-\-to\-monitor\fR \fIMONITOR_SEL\fR [\fB\-\-follow\fR]
+.RS 4
+Send the selected node to the given monitor\&. If
+\fB\-\-follow\fR
+is passed, the focused node will stay focused\&.
+.RE
+.PP
+\fB\-n\fR, \fB\-\-to\-node\fR \fINODE_SEL\fR [\fB\-\-follow\fR]
+.RS 4
+Send the selected node on the given node\&. If
+\fB\-\-follow\fR
+is passed, the focused node will stay focused\&.
+.RE
+.PP
+\fB\-s\fR, \fB\-\-swap\fR \fINODE_SEL\fR [\fB\-\-follow\fR]
+.RS 4
+Swap the selected node with the given node\&. If
+\fB\-\-follow\fR
+is passed, the focused node will stay focused\&.
+.RE
+.PP
+\fB\-p\fR, \fB\-\-presel\-dir\fR [~]\fIDIR\fR|cancel
+.RS 4
+Preselect the splitting area of the selected node (or cancel the preselection)\&. If
+\fB~\fR
+is prepended to
+\fIDIR\fR
+and the current preselection direction matches
+\fIDIR\fR, then the argument is interpreted as
+\fBcancel\fR\&. A node with a preselected area is said to be in "manual insertion mode"\&.
+.RE
+.PP
+\fB\-o\fR, \fB\-\-presel\-ratio\fR \fIRATIO\fR
+.RS 4
+Set the splitting ratio of the preselection area\&.
+.RE
+.PP
+\fB\-v\fR, \fB\-\-move\fR \fIdx\fR \fIdy\fR
+.RS 4
+Move the selected window by
+\fIdx\fR
+pixels horizontally and
+\fIdy\fR
+pixels vertically\&.
+.RE
+.PP
+\fB\-z\fR, \fB\-\-resize\fR top|left|bottom|right|top_left|top_right|bottom_right|bottom_left \fIdx\fR \fIdy\fR
+.RS 4
+Resize the selected window by moving the given handle by
+\fIdx\fR
+pixels horizontally and
+\fIdy\fR
+pixels vertically\&.
+.RE
+.PP
+\fB\-r\fR, \fB\-\-ratio\fR \fIRATIO\fR|(+|\-)(\fIPIXELS\fR|\fIFRACTION\fR)
+.RS 4
+Set the splitting ratio of the selected node (0 <
+\fIRATIO\fR
+< 1)\&.
+.RE
+.PP
+\fB\-R\fR, \fB\-\-rotate\fR \fI90|270|180\fR
+.RS 4
+Rotate the tree rooted at the selected node\&.
+.RE
+.PP
+\fB\-F\fR, \fB\-\-flip\fR \fIhorizontal|vertical\fR
+.RS 4
+Flip the the tree rooted at selected node\&.
+.RE
+.PP
+\fB\-E\fR, \fB\-\-equalize\fR
+.RS 4
+Reset the split ratios of the tree rooted at the selected node to their default value\&.
+.RE
+.PP
+\fB\-B\fR, \fB\-\-balance\fR
+.RS 4
+Adjust the split ratios of the tree rooted at the selected node so that all windows occupy the same area\&.
+.RE
+.PP
+\fB\-C\fR, \fB\-\-circulate\fR forward|backward
+.RS 4
+Circulate the windows of the tree rooted at the selected node\&.
+.RE
+.PP
+\fB\-t\fR, \fB\-\-state\fR [~](tiled|pseudo_tiled|floating|fullscreen)
+.RS 4
+Set the state of the selected window\&. If
+\fB~\fR
+is present and the current state matches the given state, then the argument is interpreted as the last state\&.
+.RE
+.PP
+\fB\-g\fR, \fB\-\-flag\fR hidden|sticky|private|locked|marked[=on|off]
+.RS 4
+Set or toggle the given flag for the selected node\&.
+.RE
+.PP
+\fB\-l\fR, \fB\-\-layer\fR below|normal|above
+.RS 4
+Set the stacking layer of the selected window\&.
+.RE
+.PP
+\fB\-i\fR, \fB\-\-insert\-receptacle\fR
+.RS 4
+Insert a receptacle node at the selected node\&.
+.RE
+.PP
+\fB\-c\fR, \fB\-\-close\fR
+.RS 4
+Close the windows rooted at the selected node\&.
+.RE
+.PP
+\fB\-k\fR, \fB\-\-kill\fR
+.RS 4
+Kill the windows rooted at the selected node\&.
+.RE
+.RE
+.SS "Desktop"
+.sp
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBGeneral Syntax\fR
+.RS 4
+.sp
+desktop [\fIDESKTOP_SEL\fR] \fICOMMANDS\fR
+.sp
+If \fIDESKTOP_SEL\fR is omitted, \fBfocused\fR is assumed\&.
+.RE
+.sp
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBCOMMANDS\fR
+.RS 4
+.PP
+\fB\-f\fR, \fB\-\-focus\fR [\fIDESKTOP_SEL\fR]
+.RS 4
+Focus the selected or given desktop\&.
+.RE
+.PP
+\fB\-a\fR, \fB\-\-activate\fR [\fIDESKTOP_SEL\fR]
+.RS 4
+Activate the selected or given desktop\&.
+.RE
+.PP
+\fB\-m\fR, \fB\-\-to\-monitor\fR \fIMONITOR_SEL\fR [\fB\-\-follow\fR]
+.RS 4
+Send the selected desktop to the given monitor\&. If
+\fB\-\-follow\fR
+is passed, the focused desktop will stay focused\&.
+.RE
+.PP
+\fB\-s\fR, \fB\-\-swap\fR \fIDESKTOP_SEL\fR [\fB\-\-follow\fR]
+.RS 4
+Swap the selected desktop with the given desktop\&. If
+\fB\-\-follow\fR
+is passed, the focused desktop will stay focused\&.
+.RE
+.PP
+\fB\-l\fR, \fB\-\-layout\fR \fICYCLE_DIR\fR|monocle|tiled
+.RS 4
+Set or cycle the layout of the selected desktop\&.
+.RE
+.PP
+\fB\-n\fR, \fB\-\-rename\fR <new_name>
+.RS 4
+Rename the selected desktop\&.
+.RE
+.PP
+\fB\-b\fR, \fB\-\-bubble\fR \fICYCLE_DIR\fR
+.RS 4
+Bubble the selected desktop in the given direction\&.
+.RE
+.PP
+\fB\-r\fR, \fB\-\-remove\fR
+.RS 4
+Remove the selected desktop\&.
+.RE
+.RE
+.SS "Monitor"
+.sp
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBGeneral Syntax\fR
+.RS 4
+.sp
+monitor [\fIMONITOR_SEL\fR] \fICOMMANDS\fR
+.sp
+If \fIMONITOR_SEL\fR is omitted, \fBfocused\fR is assumed\&.
+.RE
+.sp
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBCommands\fR
+.RS 4
+.PP
+\fB\-f\fR, \fB\-\-focus\fR [\fIMONITOR_SEL\fR]
+.RS 4
+Focus the selected or given monitor\&.
+.RE
+.PP
+\fB\-s\fR, \fB\-\-swap\fR \fIMONITOR_SEL\fR
+.RS 4
+Swap the selected monitor with the given monitor\&.
+.RE
+.PP
+\fB\-a\fR, \fB\-\-add\-desktops\fR <name>\&...
+.RS 4
+Create desktops with the given names in the selected monitor\&.
+.RE
+.PP
+\fB\-o\fR, \fB\-\-reorder\-desktops\fR <name>\&...
+.RS 4
+Reorder the desktops of the selected monitor to match the given order\&.
+.RE
+.PP
+\fB\-d\fR, \fB\-\-reset\-desktops\fR <name>\&...
+.RS 4
+Rename, add or remove desktops depending on whether the number of given names is equal, superior or inferior to the number of existing desktops\&.
+.RE
+.PP
+\fB\-g\fR, \fB\-\-rectangle\fR WxH+X+Y
+.RS 4
+Set the rectangle of the selected monitor\&.
+.RE
+.PP
+\fB\-n\fR, \fB\-\-rename\fR <new_name>
+.RS 4
+Rename the selected monitor\&.
+.RE
+.PP
+\fB\-r\fR, \fB\-\-remove\fR
+.RS 4
+Remove the selected monitor\&.
+.RE
+.RE
+.SS "Query"
+.sp
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBGeneral Syntax\fR
+.RS 4
+.sp
+query \fICOMMANDS\fR [\fIOPTIONS\fR]
+.RE
+.sp
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBCommands\fR
+.RS 4
+.sp
+The optional selectors are references\&.
+.PP
+\fB\-N\fR, \fB\-\-nodes\fR [\fINODE_SEL\fR]
+.RS 4
+List the IDs of the matching nodes\&.
+.RE
+.PP
+\fB\-D\fR, \fB\-\-desktops\fR [\fIDESKTOP_SEL\fR]
+.RS 4
+List the IDs (or names) of the matching desktops\&.
+.RE
+.PP
+\fB\-M\fR, \fB\-\-monitors\fR [\fIMONITOR_SEL\fR]
+.RS 4
+List the IDs (or names) of the matching monitors\&.
+.RE
+.PP
+\fB\-T\fR, \fB\-\-tree\fR
+.RS 4
+Print a JSON representation of the matching item\&.
+.RE
+.RE
+.sp
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBOptions\fR
+.RS 4
+.PP
+\fB\-m\fR,\fB\-\-monitor\fR [\fIMONITOR_SEL\fR|\fIMONITOR_MODIFIERS\fR], \fB\-d\fR,\fB\-\-desktop\fR [\fIDESKTOP_SEL\fR|\fIDESKTOP_MODIFIERS\fR], \fB\-n\fR, \fB\-\-node\fR [\fINODE_SEL\fR|\fINODE_MODIFIERS\fR]
+.RS 4
+Constrain matches to the selected monitors, desktops or nodes\&.
+.RE
+.PP
+\fB\-\-names\fR
+.RS 4
+Print names instead of IDs\&. Can only be used with
+\fI\-M\fR
+and
+\fI\-D\fR\&.
+.RE
+.RE
+.SS "Wm"
+.sp
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBGeneral Syntax\fR
+.RS 4
+.sp
+wm \fICOMMANDS\fR
+.RE
+.sp
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBCommands\fR
+.RS 4
+.PP
+\fB\-d\fR, \fB\-\-dump\-state\fR
+.RS 4
+Dump the current world state on standard output\&.
+.RE
+.PP
+\fB\-l\fR, \fB\-\-load\-state\fR <file_path>
+.RS 4
+Load a world state from the given file\&. The path must be absolute\&.
+.RE
+.PP
+\fB\-a\fR, \fB\-\-add\-monitor\fR <name> WxH+X+Y
+.RS 4
+Add a monitor for the given name and rectangle\&.
+.RE
+.PP
+\fB\-O\fR, \fB\-\-reorder\-monitors\fR <name>\&...
+.RS 4
+Reorder the list of monitors to match the given order\&.
+.RE
+.PP
+\fB\-o\fR, \fB\-\-adopt\-orphans\fR
+.RS 4
+Manage all the unmanaged windows remaining from a previous session\&.
+.RE
+.PP
+\fB\-h\fR, \fB\-\-record\-history\fR on|off
+.RS 4
+Enable or disable the recording of node focus history\&.
+.RE
+.PP
+\fB\-g\fR, \fB\-\-get\-status\fR
+.RS 4
+Print the current status information\&.
+.RE
+.PP
+\fB\-r\fR, \fB\-\-restart\fR
+.RS 4
+Restart the window manager
+.RE
+.RE
+.SS "Rule"
+.sp
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBGeneral Syntax\fR
+.RS 4
+.sp
+rule \fICOMMANDS\fR
+.RE
+.sp
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBCommands\fR
+.RS 4
+.PP
+\fB\-a\fR, \fB\-\-add\fR (<class_name>|*)[:(<instance_name>|*)[:(<name>|*)]] [\fB\-o\fR|\fB\-\-one\-shot\fR] [monitor=MONITOR_SEL|desktop=DESKTOP_SEL|node=NODE_SEL] [state=STATE] [layer=LAYER] [split_dir=DIR] [split_ratio=RATIO] [(hidden|sticky|private|locked|marked|center|follow|manage|focus|border)=(on|off)] [rectangle=WxH+X+Y]
+.RS 4
+Create a new rule\&.
+.RE
+.PP
+\fB\-r\fR, \fB\-\-remove\fR ^<n>|head|tail|(<class_name>|*)[:(<instance_name>|*)[:(<name>|*)]]\&...
+.RS 4
+Remove the given rules\&.
+.RE
+.PP
+\fB\-l\fR, \fB\-\-list\fR
+.RS 4
+List the rules\&.
+.RE
+.RE
+.SS "Config"
+.sp
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBGeneral Syntax\fR
+.RS 4
+.PP
+config [\-m \fIMONITOR_SEL\fR|\-d \fIDESKTOP_SEL\fR|\-n \fINODE_SEL\fR] <setting> [<value>]
+.RS 4
+Get or set the value of <setting>\&.
+.RE
+.RE
+.SS "Subscribe"
+.sp
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBGeneral Syntax\fR
+.RS 4
+.PP
+subscribe [\fIOPTIONS\fR] (all|report|monitor|desktop|node|\&...)*
+.RS 4
+Continuously print events\&. See the
+\fBEVENTS\fR
+section for the description of each event\&.
+.RE
+.RE
+.sp
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBOptions\fR
+.RS 4
+.PP
+\fB\-f\fR, \fB\-\-fifo\fR
+.RS 4
+Print a path to a FIFO from which events can be read and return\&.
+.RE
+.PP
+\fB\-c\fR, \fB\-\-count\fR \fICOUNT\fR
+.RS 4
+Stop the corresponding
+\fBenigmac\fR
+process after having received
+\fICOUNT\fR
+events\&.
+.RE
+.RE
+.SS "Quit"
+.sp
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBGeneral Syntax\fR
+.RS 4
+.PP
+quit [<status>]
+.RS 4
+Quit with an optional exit status\&.
+.RE
+.RE
+.SH "EXIT CODES"
+.sp
+If the server can\(cqt handle a message, \fBenigmac\fR will return with a non\-zero exit code\&.
+.SH "SETTINGS"
+.sp
+Colors are in the form \fI#RRGGBB\fR, booleans are \fItrue\fR, \fIon\fR, \fIfalse\fR or \fIoff\fR\&.
+.sp
+All the boolean settings are \fIfalse\fR by default unless stated otherwise\&.
+.SS "Global Settings"
+.PP
+\fInormal_border_color\fR
+.RS 4
+Color of the border of an unfocused window\&.
+.RE
+.PP
+\fIactive_border_color\fR
+.RS 4
+Color of the border of a focused window of an unfocused monitor\&.
+.RE
+.PP
+\fIfocused_border_color\fR
+.RS 4
+Color of the border of a focused window of a focused monitor\&.
+.RE
+.PP
+\fIpresel_feedback_color\fR
+.RS 4
+Color of the
+\fBnode \-\-presel\-{dir,ratio}\fR
+message feedback area\&.
+.RE
+.PP
+\fIsplit_ratio\fR
+.RS 4
+Default split ratio\&.
+.RE
+.PP
+\fIstatus_prefix\fR
+.RS 4
+Prefix prepended to each of the status lines\&.
+.RE
+.PP
+\fIexternal_rules_command\fR
+.RS 4
+Absolute path to the command used to retrieve rule consequences\&. The command will receive the following arguments: window ID, class name, instance name, and intermediate consequences\&. The output of that command must have the following format:
+\fBkey1=value1 key2=value2 \&...\fR
+(the valid key/value pairs are given in the description of the
+\fIrule\fR
+command)\&.
+.RE
+.PP
+\fIautomatic_scheme\fR
+.RS 4
+The insertion scheme used when the insertion point is in automatic mode\&. Accept the following values:
+\fBlongest_side\fR,
+\fBalternate\fR,
+\fBspiral\fR\&.
+.RE
+.PP
+\fIinitial_polarity\fR
+.RS 4
+On which child should a new window be attached when adding a window on a single window tree in automatic mode\&. Accept the following values:
+\fBfirst_child\fR,
+\fBsecond_child\fR\&.
+.RE
+.PP
+\fIdirectional_focus_tightness\fR
+.RS 4
+The tightness of the algorithm used to decide whether a window is on the
+\fIDIR\fR
+side of another window\&. Accept the following values:
+\fBhigh\fR,
+\fBlow\fR\&.
+.RE
+.PP
+\fIremoval_adjustment\fR
+.RS 4
+Adjust the brother when unlinking a node from the tree in accordance with the automatic insertion scheme\&.
+.RE
+.PP
+\fIpresel_feedback\fR
+.RS 4
+Draw the preselection feedback area\&. Defaults to
+\fItrue\fR\&.
+.RE
+.PP
+\fIborderless_monocle\fR
+.RS 4
+Remove borders of tiled windows for the
+\fBmonocle\fR
+desktop layout\&.
+.RE
+.PP
+\fIgapless_monocle\fR
+.RS 4
+Remove gaps of tiled windows for the
+\fBmonocle\fR
+desktop layout\&.
+.RE
+.PP
+\fItop_monocle_padding\fR, \fIright_monocle_padding\fR, \fIbottom_monocle_padding\fR, \fIleft_monocle_padding\fR
+.RS 4
+Padding space added at the sides of the screen for the
+\fBmonocle\fR
+desktop layout\&.
+.RE
+.PP
+\fIsingle_monocle\fR
+.RS 4
+Set the desktop layout to
+\fBmonocle\fR
+if there\(cqs only one tiled window in the tree\&.
+.RE
+.PP
+\fIborderless_singleton\fR
+.RS 4
+Remove borders of the only window on the only monitor regardless its layout\&.
+.RE
+.PP
+\fIpointer_motion_interval\fR
+.RS 4
+The minimum interval, in milliseconds, between two motion notify events\&.
+.RE
+.PP
+\fIpointer_modifier\fR
+.RS 4
+Keyboard modifier used for moving or resizing windows\&. Accept the following values:
+\fBshift\fR,
+\fBcontrol\fR,
+\fBlock\fR,
+\fBmod1\fR,
+\fBmod2\fR,
+\fBmod3\fR,
+\fBmod4\fR,
+\fBmod5\fR\&.
+.RE
+.PP
+\fIpointer_action1\fR, \fIpointer_action2\fR, \fIpointer_action3\fR
+.RS 4
+Action performed when pressing
+\fIpointer_modifier\fR
++
+\fIbutton<n>\fR\&. Accept the following values:
+\fBmove\fR,
+\fBresize_side\fR,
+\fBresize_corner\fR,
+\fBfocus\fR,
+\fBnone\fR\&.
+.RE
+.PP
+\fIclick_to_focus\fR
+.RS 4
+Button used for focusing a window (or a monitor)\&. The possible values are:
+\fBbutton1\fR,
+\fBbutton2\fR,
+\fBbutton3\fR,
+\fBany\fR,
+\fBnone\fR\&. Defaults to
+\fBbutton1\fR\&.
+.RE
+.PP
+\fIswallow_first_click\fR
+.RS 4
+Don\(cqt replay the click that makes a window focused if
+\fIclick_to_focus\fR
+isn\(cqt
+\fBnone\fR\&.
+.RE
+.PP
+\fIfocus_follows_pointer\fR
+.RS 4
+Focus the window under the pointer\&.
+.RE
+.PP
+\fIpointer_follows_focus\fR
+.RS 4
+When focusing a window, put the pointer at its center\&.
+.RE
+.PP
+\fIpointer_follows_monitor\fR
+.RS 4
+When focusing a monitor, put the pointer at its center\&.
+.RE
+.PP
+\fImapping_events_count\fR
+.RS 4
+Handle the next
+\fBmapping_events_count\fR
+mapping notify events\&. A negative value implies that every event needs to be handled\&.
+.RE
+.PP
+\fIignore_ewmh_focus\fR
+.RS 4
+Ignore EWMH focus requests coming from applications\&.
+.RE
+.PP
+\fIignore_ewmh_fullscreen\fR
+.RS 4
+Block the fullscreen state transitions that originate from an EWMH request\&. The possible values are:
+\fBnone\fR,
+\fBall\fR, or a comma separated list of the following values:
+\fBenter\fR,
+\fBexit\fR\&.
+.RE
+.PP
+\fIignore_ewmh_struts\fR
+.RS 4
+Ignore strut hinting from clients requesting to reserve space (i\&.e\&. task bars)\&.
+.RE
+.PP
+\fIcenter_pseudo_tiled\fR
+.RS 4
+Center pseudo tiled windows into their tiling rectangles\&. Defaults to
+\fItrue\fR\&.
+.RE
+.PP
+\fIhonor_size_hints\fR
+.RS 4
+Apply ICCCM window size hints\&.
+.RE
+.PP
+\fIremove_disabled_monitors\fR
+.RS 4
+Consider disabled monitors as disconnected\&.
+.RE
+.PP
+\fIremove_unplugged_monitors\fR
+.RS 4
+Remove unplugged monitors\&.
+.RE
+.PP
+\fImerge_overlapping_monitors\fR
+.RS 4
+Merge overlapping monitors (the bigger remains)\&.
+.RE
+.SS "Monitor and Desktop Settings"
+.PP
+\fItop_padding\fR, \fIright_padding\fR, \fIbottom_padding\fR, \fIleft_padding\fR
+.RS 4
+Padding space added at the sides of the monitor or desktop\&.
+.RE
+.SS "Desktop Settings"
+.PP
+\fIwindow_gap\fR
+.RS 4
+Size of the gap that separates windows\&.
+.RE
+.SS "Node Settings"
+.PP
+\fIborder_width\fR
+.RS 4
+Window border width\&.
+.RE
+.SH "POINTER BINDINGS"
+.PP
+\fIclick_to_focus\fR
+.RS 4
+Focus the window (or the monitor) under the pointer if the value isn\(cqt
+\fBnone\fR\&.
+.RE
+.PP
+\fIpointer_modifier\fR + \fIbutton1\fR
+.RS 4
+Move the window under the pointer\&.
+.RE
+.PP
+\fIpointer_modifier\fR + \fIbutton2\fR
+.RS 4
+Resize the window under the pointer by dragging the nearest side\&.
+.RE
+.PP
+\fIpointer_modifier\fR + \fIbutton3\fR
+.RS 4
+Resize the window under the pointer by dragging the nearest corner\&.
+.RE
+.sp
+The behavior of \fIpointer_modifier\fR + \fIbutton<n>\fR can be modified through the \fIpointer_action<n>\fR setting\&.
+.SH "EVENTS"
+.PP
+\fIreport\fR
+.RS 4
+See the next section for the description of the format\&.
+.RE
+.PP
+\fImonitor_add <monitor_id> <monitor_name> <monitor_geometry>\fR
+.RS 4
+A monitor is added\&.
+.RE
+.PP
+\fImonitor_rename <monitor_id> <old_name> <new_name>\fR
+.RS 4
+A monitor is renamed\&.
+.RE
+.PP
+\fImonitor_remove <monitor_id>\fR
+.RS 4
+A monitor is removed\&.
+.RE
+.PP
+\fImonitor_swap <src_monitor_id> <dst_monitor_id>\fR
+.RS 4
+A monitor is swapped\&.
+.RE
+.PP
+\fImonitor_focus <monitor_id>\fR
+.RS 4
+A monitor is focused\&.
+.RE
+.PP
+\fImonitor_geometry <monitor_id> <monitor_geometry>\fR
+.RS 4
+The geometry of a monitor changed\&.
+.RE
+.PP
+\fIdesktop_add <monitor_id> <desktop_id> <desktop_name>\fR
+.RS 4
+A desktop is added\&.
+.RE
+.PP
+\fIdesktop_rename <monitor_id> <desktop_id> <old_name> <new_name>\fR
+.RS 4
+A desktop is renamed\&.
+.RE
+.PP
+\fIdesktop_remove <monitor_id> <desktop_id>\fR
+.RS 4
+A desktop is removed\&.
+.RE
+.PP
+\fIdesktop_swap <src_monitor_id> <src_desktop_id> <dst_monitor_id> <dst_desktop_id>\fR
+.RS 4
+A desktop is swapped\&.
+.RE
+.PP
+\fIdesktop_transfer <src_monitor_id> <src_desktop_id> <dst_monitor_id>\fR
+.RS 4
+A desktop is transferred\&.
+.RE
+.PP
+\fIdesktop_focus <monitor_id> <desktop_id>\fR
+.RS 4
+A desktop is focused\&.
+.RE
+.PP
+\fIdesktop_activate <monitor_id> <desktop_id>\fR
+.RS 4
+A desktop is activated\&.
+.RE
+.PP
+\fIdesktop_layout <monitor_id> <desktop_id> tiled|monocle\fR
+.RS 4
+The layout of a desktop changed\&.
+.RE
+.PP
+\fInode_add <monitor_id> <desktop_id> <ip_id> <node_id>\fR
+.RS 4
+A node is added\&.
+.RE
+.PP
+\fInode_remove <monitor_id> <desktop_id> <node_id>\fR
+.RS 4
+A node is removed\&.
+.RE
+.PP
+\fInode_swap <src_monitor_id> <src_desktop_id> <src_node_id> <dst_monitor_id> <dst_desktop_id> <dst_node_id>\fR
+.RS 4
+A node is swapped\&.
+.RE
+.PP
+\fInode_transfer <src_monitor_id> <src_desktop_id> <src_node_id> <dst_monitor_id> <dst_desktop_id> <dst_node_id>\fR
+.RS 4
+A node is transferred\&.
+.RE
+.PP
+\fInode_focus <monitor_id> <desktop_id> <node_id>\fR
+.RS 4
+A node is focused\&.
+.RE
+.PP
+\fInode_activate <monitor_id> <desktop_id> <node_id>\fR
+.RS 4
+A node is activated\&.
+.RE
+.PP
+\fInode_presel <monitor_id> <desktop_id> <node_id> (dir DIR|ratio RATIO|cancel)\fR
+.RS 4
+A node is preselected\&.
+.RE
+.PP
+\fInode_stack <node_id_1> below|above <node_id_2>\fR
+.RS 4
+A node is stacked below or above another node\&.
+.RE
+.PP
+\fInode_geometry <monitor_id> <desktop_id> <node_id> <node_geometry>\fR
+.RS 4
+The geometry of a window changed\&.
+.RE
+.PP
+\fInode_state <monitor_id> <desktop_id> <node_id> tiled|pseudo_tiled|floating|fullscreen on|off\fR
+.RS 4
+The state of a window changed\&.
+.RE
+.PP
+\fInode_flag <monitor_id> <desktop_id> <node_id> hidden|sticky|private|locked|marked|urgent on|off\fR
+.RS 4
+One of the flags of a node changed\&.
+.RE
+.PP
+\fInode_layer <monitor_id> <desktop_id> <node_id> below|normal|above\fR
+.RS 4
+The layer of a window changed\&.
+.RE
+.PP
+\fIpointer_action <monitor_id> <desktop_id> <node_id> move|resize_corner|resize_side begin|end\fR
+.RS 4
+A pointer action occurred\&.
+.RE
+.sp
+Please note that \fBenigma\fR initializes monitors before it reads messages on its socket, therefore the initial monitor events can\(cqt be received\&.
+.SH "REPORT FORMAT"
+.sp
+Each report event message is composed of items separated by colons\&.
+.sp
+Each item has the form \fI<type><value>\fR where \fI<type>\fR is the first character of the item\&.
+.PP
+\fIM<monitor_name>\fR
+.RS 4
+Focused monitor\&.
+.RE
+.PP
+\fIm<monitor_name>\fR
+.RS 4
+Unfocused monitor\&.
+.RE
+.PP
+\fIO<desktop_name>\fR
+.RS 4
+Occupied focused desktop\&.
+.RE
+.PP
+\fIo<desktop_name>\fR
+.RS 4
+Occupied unfocused desktop\&.
+.RE
+.PP
+\fIF<desktop_name>\fR
+.RS 4
+Free focused desktop\&.
+.RE
+.PP
+\fIf<desktop_name>\fR
+.RS 4
+Free unfocused desktop\&.
+.RE
+.PP
+\fIU<desktop_name>\fR
+.RS 4
+Urgent focused desktop\&.
+.RE
+.PP
+\fIu<desktop_name>\fR
+.RS 4
+Urgent unfocused desktop\&.
+.RE
+.PP
+\fIL(T|M)\fR
+.RS 4
+Layout of the focused desktop of a monitor\&.
+.RE
+.PP
+\fIT(T|P|F|=|@)\fR
+.RS 4
+State of the focused node of a focused desktop\&.
+.RE
+.PP
+\fIG(S?P?L?M?)\fR
+.RS 4
+Active flags of the focused node of a focused desktop\&.
+.RE
+.SH "ENVIRONMENT VARIABLES"
+.PP
+\fIENIGMA_SOCKET\fR
+.RS 4
+The path of the socket used for the communication between
+\fBenigmac\fR
+and
+\fBenigma\fR\&. If it isn\(cqt defined, then the following path is used:
+\fI/tmp/enigma<host_name>_<display_number>_<screen_number>\-socket\fR\&.
+.RE
+.SH "CONTRIBUTORS"
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+.RE
+.SH "AUTHOR"
+.sp
+Eternal Acwars <eternalacwars at gmail\&.com>

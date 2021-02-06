@@ -1,0 +1,46 @@
+#! /bin/sh
+
+. ./prelude
+
+enigmac monitor -a "test-insertion"
+enigmac desktop -f "test-insertion"
+
+# Automatic mode
+
+window add 2
+
+split_type_a=$(enigmac query -T -n @/ | jshon -e splitType -u)
+
+window add
+
+split_type_b=$(enigmac query -T -n @/2 | jshon -e splitType -u)
+
+[ "$split_type_a" = "$split_type_b" ] && fail "Non-vacant node insertion should rotate brother."
+
+split_type_a=$(enigmac query -T -n @/ | jshon -e splitType -u)
+
+enigmac rule -a Test:test -o state=floating
+window add
+
+split_type_b=$(enigmac query -T -n @/2 | jshon -e splitType -u)
+
+[ "$split_type_a" = "$split_type_b" ] || fail "Vacant node insertion shouldn't rotate brother."
+
+window remove
+
+# Manual mode
+
+for dir in north west south east ; do
+	child=1
+	split_type=vertical
+	[ "$dir" = "south" -o "$dir" = "east" ] && child=2
+	[ "$dir" = "north" -o "$dir" = "south" ] && split_type=horizontal
+	enigmac node -p $dir
+	window add
+	[ "$(enigmac query -N -n)" = "$(enigmac query -N -n @parent/${child})" ] || fail "Wrong child polarity for ${dir} preselection."
+	[ "$(enigmac query -T -n @parent | jshon -e splitType -u)" = "$split_type" ] || fail "Wrong split type for ${dir} preselection."
+done
+
+window remove 7
+
+enigmac desktop "test-insertion" -r

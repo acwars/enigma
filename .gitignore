@@ -1,0 +1,5 @@
+tags
+enigma
+enigmac
+*.o
+tests/test_window

@@ -1,0 +1,28 @@
+#! /bin/sh
+
+. ./prelude
+
+enigmac monitor -a "test-sticky-a"
+enigmac monitor -a "test-sticky-b"
+
+enigmac desktop -f "test-sticky-a"
+
+window add 3
+enigmac node -g sticky
+
+sticky_node_id=$(enigmac query -N -n)
+
+enigmac rule -a Test:test -o desktop="test-sticky-b"
+
+window add
+
+enigmac desktop -f "test-sticky-b"
+
+enigmac query -N -d | grep "$sticky_node_id" > /dev/null || fail "Sticky node is missing in destination."
+
+window remove 2
+enigmac desktop -f "test-sticky-a"
+window remove 2
+
+enigmac desktop "test-sticky-a" -r
+enigmac desktop "test-sticky-b" -r
