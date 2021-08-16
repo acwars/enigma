@@ -969,4 +969,4 @@ Contributors
 Author
 ------
 
-Eternal Acwars <eternalacwars at gmail.com>
+Euris Lee <eurislee at gmail.com>

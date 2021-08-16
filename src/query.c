@@ -674,6 +674,12 @@ int desktop_from_desc(char *desc, coordinates_t *ref, coordinates_t *dst)
 	desc = desc_copy;
 
 	char *hash = strrchr(desc, '#');
+	char *colon = strrchr(desc, ':');
+
+	/* Discard hashes inside a MONITOR_SEL, e.g. `primary#next:focused` */
+	if (hash != NULL && colon != NULL && hash < colon) {
+		hash = NULL;
+	}
 
 	if (hash != NULL) {
 		*hash = '\0';
@@ -687,8 +693,12 @@ int desktop_from_desc(char *desc, coordinates_t *ref, coordinates_t *dst)
 		}
 	}
 
+	/* Discard colons within references, e.g. `DisplayPort-1:focused#next.local` */
+	if (colon != NULL && hash != NULL && colon < hash) {
+		colon = NULL;
+	}
+
 	desktop_select_t sel = make_desktop_select();
-	char *colon = strrchr(desc, ':');
 
 	if (!parse_desktop_modifiers(colon != NULL ? colon : desc, &sel)) {
 		free(desc_copy);
@@ -1101,26 +1111,16 @@ bool node_matches(coordinates_t *loc, coordinates_t *ref, node_select_t *sel)
 	NFLAG(marked)
 #undef NFLAG
 
-	if (loc->node->client == NULL &&
-		(sel->same_class != OPTION_NONE ||
-		 sel->tiled != OPTION_NONE ||
-		 sel->pseudo_tiled != OPTION_NONE ||
-		 sel->floating != OPTION_NONE ||
-		 sel->fullscreen != OPTION_NONE ||
-		 sel->below != OPTION_NONE ||
-		 sel->normal != OPTION_NONE ||
-		 sel->above != OPTION_NONE ||
-		 sel->urgent != OPTION_NONE)) {
-		return false;
+#define NSPLIT(p, e) \
+	if (sel->p != OPTION_NONE && \
+	    loc->node->split_type != e \
+	    ? sel->p == OPTION_TRUE \
+	    : sel->p == OPTION_FALSE) { \
+		return false; \
 	}
-
-	if (ref->node != NULL && ref->node->client != NULL &&
-	    sel->same_class != OPTION_NONE &&
-	    streq(loc->node->client->class_name, ref->node->client->class_name)
-	    ? sel->same_class == OPTION_FALSE
-	    : sel->same_class == OPTION_TRUE) {
-		return false;
-	}
+	NSPLIT(horizontal, TYPE_HORIZONTAL)
+	NSPLIT(vertical, TYPE_VERTICAL)
+#undef NSPLIT
 
 	if (sel->descendant_of != OPTION_NONE &&
 	    !is_descendant(loc->node, ref->node)
@@ -1133,6 +1133,29 @@ bool node_matches(coordinates_t *loc, coordinates_t *ref, node_select_t *sel)
 	    !is_descendant(ref->node, loc->node)
 	    ? sel->ancestor_of == OPTION_TRUE
 	    : sel->ancestor_of == OPTION_FALSE) {
+		return false;
+	}
+
+	if (loc->node->client == NULL) {
+		if (sel->same_class == OPTION_TRUE ||
+		    sel->tiled == OPTION_TRUE ||
+		    sel->pseudo_tiled == OPTION_TRUE ||
+		    sel->floating == OPTION_TRUE ||
+		    sel->fullscreen == OPTION_TRUE ||
+		    sel->below == OPTION_TRUE ||
+		    sel->normal == OPTION_TRUE ||
+		    sel->above == OPTION_TRUE ||
+		    sel->urgent == OPTION_TRUE) {
+			return false;
+		}
+		return true;
+	}
+
+	if (ref->node != NULL && ref->node->client != NULL &&
+	    sel->same_class != OPTION_NONE &&
+	    streq(loc->node->client->class_name, ref->node->client->class_name)
+	    ? sel->same_class == OPTION_FALSE
+	    : sel->same_class == OPTION_TRUE) {
 		return false;
 	}
 
@@ -1170,20 +1193,6 @@ bool node_matches(coordinates_t *loc, coordinates_t *ref, node_select_t *sel)
 	}
 	WFLAG(urgent)
 #undef WFLAG
-
-	if (sel->horizontal != OPTION_NONE &&
-	    loc->node->split_type != TYPE_HORIZONTAL
-	    ? sel->horizontal == OPTION_TRUE
-	    : sel->horizontal == OPTION_FALSE) {
-		return false;
-	}
-
-	if (sel->vertical != OPTION_NONE &&
-	    loc->node->split_type != TYPE_VERTICAL
-	    ? sel->vertical == OPTION_TRUE
-	    : sel->vertical == OPTION_FALSE) {
-		return false;
-	}
 
 	return true;
 }

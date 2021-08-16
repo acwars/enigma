@@ -272,20 +272,27 @@ void cmd_node(char **args, int num, FILE *rsp)
 				alternate = true;
 				(*args)++;
 			}
-			if (parse_client_state(*args, &cst)) {
+			if (alternate && (*args)[0] == '\0') {
+				if (trg.node != NULL && trg.node->client != NULL) {
+					cst = trg.node->client->last_state;
+				} else {
+					fail(rsp, "");
+					break;
+				}
+			} else if (parse_client_state(*args, &cst)) {
 				if (alternate && trg.node != NULL && trg.node->client != NULL &&
 				    trg.node->client->state == cst) {
 					cst = trg.node->client->last_state;
 				}
-				if (!set_state(trg.monitor, trg.desktop, trg.node, cst)) {
-					fail(rsp, "");
-					break;
-				}
-				changed = true;
 			} else {
 				fail(rsp, "node %s: Invalid argument: '%s'.\n", *(args - 1), *args);
 				break;
 			}
+			if (!set_state(trg.monitor, trg.desktop, trg.node, cst)) {
+				fail(rsp, "");
+				break;
+			}
+			changed = true;
 		} else if (streq("-g", *args) || streq("--flag", *args)) {
 			num--, args++;
 			if (num < 1) {
@@ -425,6 +432,24 @@ void cmd_node(char **args, int num, FILE *rsp)
 				}
 			} else {
 				fail(rsp, "node %s: Invalid resize handle argument: '%s'.\n", *(args - 1), *args);
+				break;
+			}
+		} else if (streq("-y", *args) || streq("--type", *args)) {
+			num--, args++;
+			if (num < 1) {
+				fail(rsp, "node %s: Not enough arguments.\n", *(args - 1));
+				break;
+			}
+			if (trg.node == NULL) {
+				fail(rsp, "");
+				break;
+			}
+			split_type_t typ;
+			if (parse_split_type(*args, &typ)) {
+				set_type(trg.node, typ);
+				changed = true;
+			} else {
+				fail(rsp, "");
 				break;
 			}
 		} else if (streq("-r", *args) || streq("--ratio", *args)) {
